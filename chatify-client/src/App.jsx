@@ -3,8 +3,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
 
-function App() {
-  // kolla om token finns i localStorage
+export default function App() {
   const token = localStorage.getItem("token");
 
   return (
@@ -22,14 +21,8 @@ function App() {
           path="/chat"
           element={token ? <Chat /> : <Navigate to="/login" />}
         />
-        {/* default-route */}
-        <Route
-          path="*"
-          element={<Navigate to={token ? "/chat" : "/login"} />}
-        />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;

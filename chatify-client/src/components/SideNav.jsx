@@ -17,7 +17,7 @@ export default function SideNav() {
         left: 0,
         top: 0,
         bottom: 0,
-        backgroundColor: "#f4f4f4",
+        backgroundColor: "#f0f0f0",
         padding: "20px",
       }}
     >

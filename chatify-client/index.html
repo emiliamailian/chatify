@@ -1,12 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://i.pravatar.cc https://freeimage.host;">
+    <!-- CSP-tag för Netlify -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' https://chatify-api.up.railway.app; img-src 'self' https://i.pravatar.cc https://freeimage.host;"
+    />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>Chatify</title>
   </head>
   <body>
     <div id="root"></div>

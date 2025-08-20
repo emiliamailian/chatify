@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SideNav from "../components/SideNav";
+import { createMessage, deleteMessage, getMessages } from "../api/chatService";
+import DOMPurify from "dompurify";
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -16,89 +18,57 @@ export default function Chat() {
       return;
     }
 
-    const fetchMessages = async () => {
-      const res = await fetch("https://chatify-api.up.railway.app/messages", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setMessages(data);
-    };
-
-    fetchMessages();
+    (async () => {
+      const res = await getMessages();
+      if (res.success) setMessages(res.data);
+    })();
   }, [token, navigate]);
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMsg.trim()) return;
-
-    const csrfRes = await fetch("https://chatify-api.up.railway.app/csrf", {
-      method: "PATCH",
-      credentials: "include",
-    });
-    const { csrfToken } = await csrfRes.json();
-
-    await fetch("https://chatify-api.up.railway.app/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "X-CSRF-Token": csrfToken,
-      },
-      credentials: "include",
-      body: JSON.stringify({ message: newMsg }),
-    });
-
-    setNewMsg("");
-    const refetch = await fetch("https://chatify-api.up.railway.app/messages", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setMessages(await refetch.json());
+    const clean = DOMPurify.sanitize(newMsg);
+    const res = await createMessage(clean);
+    if (res.success) {
+      setMessages([...messages, res.data]);
+      setNewMsg("");
+    }
   };
 
-  const handleDelete = async (id) => {
-    const csrfRes = await fetch("https://chatify-api.up.railway.app/csrf", {
-      method: "PATCH",
-      credentials: "include",
-    });
-    const { csrfToken } = await csrfRes.json();
-
-    await fetch(`https://chatify-api.up.railway.app/messages/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "X-CSRF-Token": csrfToken,
-      },
-      credentials: "include",
-    });
-
+  const handleDel = async (id) => {
+    await deleteMessage(id);
     setMessages(messages.filter((m) => m.id !== id));
   };
 
   return (
     <>
       <SideNav />
-      <div style={{ marginLeft: "160px" }}>
+      <div style={{ marginLeft: "170px" }}>
         <h2>Chat</h2>
-        <div>
-          {Array.isArray(messages) &&
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                style={{
-                  textAlign: msg.userId === user.sub ? "right" : "left",
-                  border: "1px solid #ddd",
-                  margin: "8px 0",
-                  padding: "5px 10px",
-                  borderRadius: "8px",
-                }}
-              >
-                <p>{msg.message}</p>
-                {msg.userId === user.sub && (
-                  <button onClick={() => handleDelete(msg.id)}>Radera</button>
-                )}
+
+        {Array.isArray(messages) &&
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`chat-bubble ${
+                msg.userId === user.sub ? "bubble-right" : "bubble-left"
+              }`}
+            >
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <img
+                  src={msg.avatar}
+                  alt="avatar"
+                  width="30"
+                  height="30"
+                  style={{ borderRadius: "50%" }}
+                />
+                <strong>{msg.username}</strong>
               </div>
-            ))}
-        </div>
+              <p dangerouslySetInnerHTML={{ __html: msg.message }}></p>
+              {msg.userId === user.sub && (
+                <button onClick={() => handleDel(msg.id)}>Radera</button>
+              )}
+            </div>
+          ))}
 
         <form onSubmit={handleSend}>
           <input
@@ -106,7 +76,7 @@ export default function Chat() {
             placeholder="Skriv meddelande..."
             value={newMsg}
             onChange={(e) => setNewMsg(e.target.value)}
-        />
+          />
           <button type="submit">Skicka</button>
         </form>
       </div>
